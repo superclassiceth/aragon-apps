@@ -1,6 +1,7 @@
-import React, { useMemo, useCallback, useContext } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
+import { saveAs } from 'file-saver'
 import {
   Button,
   ContextMenu,
@@ -14,73 +15,25 @@ import {
   textStyle,
   useLayout,
   useTheme,
-  useToast,
 } from '@aragon/ui'
 import {
   useAragonApi,
   useConnectedAccount,
-  useCurrentApp,
   useNetwork,
 } from '@aragon/api-react'
-import { saveAs } from 'file-saver'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
-import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
+import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import useDownloadData from './useDownloadData'
 import useFilteredTransfers from './useFilteredTransfers'
-
-const formatDate = date => format(date, 'dd/MM/yy')
-
-const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
-  const mappedData = await Promise.all(
-    transfers.map(
-      async ({
-        date,
-        numData: { amount },
-        reference,
-        isIncoming,
-        entity,
-        token,
-      }) => {
-        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-        const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
-          decimals,
-          true,
-          { rounding: 5 }
-        )
-        const { name = '' } = (await resolveAddress(entity)) || {}
-        return `${formatDate(
-          date
-        )},${name},${entity},${reference},${`"${formattedAmount} ${symbol}"`}`
-      }
-    )
-  )
-  return ['Date,Name,Source/Recipient,Reference,Amount']
-    .concat(mappedData)
-    .join('\n')
-}
-
-const getDownloadFilename = (appAddress, { start, end }) => {
-  const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${appAddress}_${today}.csv`
-  if (start && end) {
-    const formattedStart = format(start, 'yyyy-MM-dd')
-    const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${appAddress}_${formattedStart}_to_${formattedEnd}.csv`
-  }
-  return filename
-}
 
 const Transfers = React.memo(({ tokens, transactions }) => {
   const { appState } = useAragonApi()
   const connectedAccount = useConnectedAccount()
-  const currentApp = useCurrentApp()
   const { layoutName } = useLayout()
   const theme = useTheme()
-  const toast = useToast()
 
   const {
     emptyResultsViaFilters,
@@ -97,7 +50,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     symbols,
     transferTypes,
   } = useFilteredTransfers({ transactions, tokens })
-
   const { isSyncing } = appState
   const tokenDetails = tokens.reduce(
     (details, { address, decimals, symbol }) => {
@@ -109,24 +61,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     },
     {}
   )
-  const { resolve: resolveAddress } = useContext(IdentityContext)
-  const handleDownload = useCallback(async () => {
-    if (!currentApp || !currentApp.appAddress) {
-      return
-    }
 
-    const data = await getDownloadData(
-      filteredTransfers,
-      tokenDetails,
-      resolveAddress
-    )
-    const filename = getDownloadFilename(
-      currentApp.appAddress,
-      selectedDateRange
-    )
-    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-    toast('Transfers data exported')
-  }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
+  const { handleDownload } = useDownloadData({
+    filteredTransfers,
+    selectedDateRange,
+    tokenDetails,
+  })
 
   const compactMode = layoutName === 'small'
 
