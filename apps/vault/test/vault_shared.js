@@ -295,9 +295,9 @@ module.exports = (vaultName, { accounts, artifacts, web3 }) => {
 
             const vaultBalance = await token.balanceOf(vault.address)
             assert.equal(vaultBalance, 5, 'token accounting should be correct')
-            assert.deepEqual(
-              await vault.balance(token.address),
-              vaultBalance,
+            assert.equal(
+              vaultBalance.eq(await vault.balance(token.address)),
+              true,
               'vault should know its balance'
             )
           })
