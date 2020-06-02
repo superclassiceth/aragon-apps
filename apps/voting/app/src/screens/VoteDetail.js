@@ -17,15 +17,16 @@ import {
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
+import DisputableActionStatus from '../components/VoteDetail/DisputableActionStatus'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
+import VoteInfoBoxes from '../components/VoteDetail/VoteInfoBoxes'
 import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
-import VoteInfoBoxes from '../components/VoteDetail/VoteInfoBoxes'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -204,7 +205,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             <VoteInfoBoxes vote={vote} />
           </React.Fragment>
         }
-        secondary={<VoteInfoBoxes vote={vote} />}
+        secondary={<DisputableActionStatus />}
       />
     </React.Fragment>
   )

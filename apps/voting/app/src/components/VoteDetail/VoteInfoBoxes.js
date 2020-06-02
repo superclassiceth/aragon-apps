@@ -28,82 +28,108 @@ function VoteInfoBoxes({ vote }) {
   const votesNayVotersSize = safeDiv(nay, totalVotes)
 
   return (
-    <React.Fragment>
-      <Box heading="Status">
-        <Status vote={vote} />
-      </Box>
-      <Box
-        heading={
-          <React.Fragment>
-            Support %
-            <Help hint="What is Support?">
-              <strong>Support</strong> is the relative percentage of tokens that
-              are required to vote “Yes” for a proposal to be approved. For
-              example, if “Support” is set to 50%, then more than 50% of the
-              tokens used to vote on a proposal must vote “Yes” for it to pass.
-            </Help>
-          </React.Fragment>
-        }
-      >
-        <div
+    <div
+      css={`
+        margin-top: ${2 * GU}px;
+        display: grid;
+        grid-template-columns: auto auto auto;
+        grid-template-rows: 197px;
+        column-gap: ${2 * GU}px;
+      `}
+    >
+      <div>
+        <Box
+          heading="Status"
           css={`
-            ${textStyle('body2')};
+            height: 100%;
           `}
         >
-          {round(votesYeaVotersSize * 100, 2)}%{' '}
-          <span
-            css={`
-              color: ${theme.surfaceContentSecondary};
-            `}
-          >
-            (>{round(supportRequired * 100, 2)}% needed)
-          </span>
-        </div>
-        <SummaryBar
-          positiveSize={votesYeaVotersSize}
-          requiredSize={supportRequired}
+          <Status vote={vote} />
+        </Box>
+      </div>
+      <div>
+        <Box
+          heading={
+            <React.Fragment>
+              Support %
+              <Help hint="What is Support?">
+                <strong>Support</strong> is the relative percentage of tokens
+                that are required to vote “Yes” for a proposal to be approved.
+                For example, if “Support” is set to 50%, then more than 50% of
+                the tokens used to vote on a proposal must vote “Yes” for it to
+                pass.
+              </Help>
+            </React.Fragment>
+          }
           css={`
-            margin-top: ${2 * GU}px;
-          `}
-        />
-      </Box>
-      <Box
-        heading={
-          <React.Fragment>
-            Minimum Approval %
-            <Help hint="What is Minimum Approval?">
-              <strong>Minimum Approval</strong> is the percentage of the total
-              token supply that is required to vote “Yes” on a proposal before
-              it can be approved. For example, if the “Minimum Approval” is set
-              to 20%, then more than 20% of the outstanding token supply must
-              vote “Yes” on a proposal for it to pass.
-            </Help>
-          </React.Fragment>
-        }
-      >
-        <div
-          css={`
-            ${textStyle('body2')};
+            height: 100%;
           `}
         >
-          {round(quorumProgress * 100, 2)}%{' '}
-          <span
+          <div
             css={`
-              color: ${theme.surfaceContentSecondary};
+              ${textStyle('body2')};
             `}
           >
-            (>{round(minAcceptQuorum * 100, 2)}% needed)
-          </span>
-        </div>
-        <SummaryBar
-          positiveSize={quorumProgress}
-          requiredSize={minAcceptQuorum}
+            {round(votesYeaVotersSize * 100, 2)}%{' '}
+            <span
+              css={`
+                color: ${theme.surfaceContentSecondary};
+              `}
+            >
+              (>{round(supportRequired * 100, 2)}% needed)
+            </span>
+          </div>
+          <SummaryBar
+            positiveSize={votesYeaVotersSize}
+            requiredSize={supportRequired}
+            css={`
+              margin-top: ${2 * GU}px;
+            `}
+          />
+        </Box>
+      </div>
+      <div>
+        <Box
+          heading={
+            <React.Fragment>
+              Minimum Approval %
+              <Help hint="What is Minimum Approval?">
+                <strong>Minimum Approval</strong> is the percentage of the total
+                token supply that is required to vote “Yes” on a proposal before
+                it can be approved. For example, if the “Minimum Approval” is
+                set to 20%, then more than 20% of the outstanding token supply
+                must vote “Yes” on a proposal for it to pass.
+              </Help>
+            </React.Fragment>
+          }
           css={`
-            margin-top: ${2 * GU}px;
+            height: 100%;
           `}
-        />
-      </Box>
-    </React.Fragment>
+        >
+          <div
+            css={`
+              ${textStyle('body2')};
+            `}
+          >
+            {round(quorumProgress * 100, 2)}%{' '}
+            <span
+              css={`
+                color: ${theme.surfaceContentSecondary};
+              `}
+            >
+              (>{round(minAcceptQuorum * 100, 2)}% needed)
+            </span>
+          </div>
+          <SummaryBar
+            positiveSize={quorumProgress}
+            requiredSize={minAcceptQuorum}
+            css={`
+              margin-top: ${2 * GU}px;
+            `}
+          />
+        </Box>
+      </div>
+    </div>
   )
 }
 
