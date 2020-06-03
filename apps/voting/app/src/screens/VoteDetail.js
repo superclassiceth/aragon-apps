@@ -200,6 +200,24 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   onVoteYes={handleVoteYes}
                   vote={vote}
                 />
+                {vote.disputable &&
+                  vote.disputable.disputableStatus === 'Paused' && (
+                    <Info type="warning">
+                      This vote has been paused as the result of the originating
+                      action being challenged. When the challenge is resolved,
+                      if allowed, the voting period will resume and last the
+                      rest of its duration time. Othersiwe, it will be
+                      cancelled.
+                    </Info>
+                  )}
+                {vote.disputable &&
+                  vote.disputable.disputableStatus === 'Cancelled' && (
+                    <Info type="warning">
+                      This vote has been cancelled as the result of the
+                      originating action being challenged and the settlement
+                      offer being accepted.
+                    </Info>
+                  )}
               </section>
             </Box>
             <VoteInfoBoxes vote={vote} />
