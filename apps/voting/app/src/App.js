@@ -15,7 +15,6 @@ import NoVotes from './screens/NoVotes'
 import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
 import { AppLogicProvider, useAppLogic } from './app-logic'
-import { getDisputableVote } from './agreementsMockData'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
 
@@ -89,7 +88,7 @@ const App = React.memo(function App() {
             />
             {selectedVote ? (
               <VoteDetail
-                vote={...selectedVote, getDisputableVote()}
+                vote={selectedVote}
                 onBack={handleBack}
                 onVote={actions.vote}
                 onExecute={actions.execute}

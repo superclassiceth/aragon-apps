@@ -7,6 +7,7 @@ import {
   Help,
   IconCheck,
   IconTime,
+  Info,
   Split,
   Tag,
   Timer,
@@ -27,10 +28,12 @@ import VoteCast from '../components/VoteCast'
 import VoteInfoBoxes from '../components/VoteDetail/VoteInfoBoxes'
 import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
+import DisputableActionInfo from '../components/VoteDetail/DisputableActionInfo'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
+import { getDisputableVote } from '../agreementsMockData'
 
 const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
 
@@ -50,6 +53,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     numData,
     voteId,
   } = vote
+
+  //TODO: remove this function and add real data
+  vote.disputable = getDisputableVote()
+
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, description, metadata, open } = data
   const quorumProgress = getQuorumProgress(vote)
@@ -200,30 +207,36 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   onVoteYes={handleVoteYes}
                   vote={vote}
                 />
-                {vote.disputable &&
-                  vote.disputable.disputableStatus === 'Paused' && (
-                    <Info type="warning">
-                      This vote has been paused as the result of the originating
-                      action being challenged. When the challenge is resolved,
-                      if allowed, the voting period will resume and last the
-                      rest of its duration time. Othersiwe, it will be
-                      cancelled.
-                    </Info>
-                  )}
-                {vote.disputable &&
-                  vote.disputable.disputableStatus === 'Cancelled' && (
-                    <Info type="warning">
-                      This vote has been cancelled as the result of the
-                      originating action being challenged and the settlement
-                      offer being accepted.
-                    </Info>
-                  )}
+                <DisputableActionInfo
+                  vote={vote}
+                  connectedAccount={connectedAccount}
+                />
+                {vote.disputable && vote.disputable.status === 'Paused' && (
+                  <Info mode="warning">
+                    This vote has been paused as the result of the originating
+                    action being challenged. When the challenge is resolved, if
+                    allowed, the voting period will resume and last the rest of
+                    its duration time. Othersiwe, it will be cancelled.
+                  </Info>
+                )}
+                {vote.disputable && vote.disputable.status === 'Cancelled' && (
+                  <Info type="warning">
+                    This vote has been cancelled as the result of the
+                    originating action being challenged and the settlement offer
+                    being accepted.
+                  </Info>
+                )}
               </section>
             </Box>
             <VoteInfoBoxes vote={vote} />
           </React.Fragment>
         }
-        secondary={<DisputableActionStatus />}
+        secondary={
+          <DisputableActionStatus
+            vote={vote}
+            connectedAccount={connectedAccount}
+          />
+        }
       />
     </React.Fragment>
   )

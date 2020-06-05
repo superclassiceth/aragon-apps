@@ -13,19 +13,19 @@ import {
 } from '@aragon/ui'
 import DisputableStatusTag from './DisputableStatusTag'
 import { getChallengedVote, getAgreement } from '../../agreementsMockData'
+import { addressesEqual } from '../../web3-utils'
 
-function DisputableActionStatus({}) {
+function DisputableActionStatus({ vote, connectedAccount }) {
   const theme = useTheme()
   const agreement = getAgreement()
-
-  const vote = getChallengedVote()
 
   return (
     <React.Fragment>
       <Box heading="Disputable Action Status">
         <Item>
           <Label>Status</Label>
-          <DisputableStatusTag status={vote.disputable.disputableStatus} />
+
+          <DisputableStatusTag status={vote.disputable.status} />
         </Item>
         <Item>
           <Label>Action collateral locked</Label>
@@ -35,8 +35,8 @@ function DisputableActionStatus({}) {
               align-items: center;
             `}
           >
-            {vote.disputable.collateral.actionAmount}{' '}
-            {vote.disputable.collateral.collateralToken}
+            {vote.disputable.action.collateral.challengeAmount}{' '}
+            {vote.disputable.action.collateral.collateralToken}
             <span
               css={`
                 padding-left: ${1 * GU}px;
@@ -61,7 +61,7 @@ function DisputableActionStatus({}) {
             {agreement.agreementTitle}
           </div>
         </Item>
-        {vote.dispute && (
+        {vote.disputable && vote.disputable.action && (
           <Item>
             <Label>Dispute</Label>
             <div
@@ -70,7 +70,7 @@ function DisputableActionStatus({}) {
                 color: ${theme.link};
               `}
             >
-              Dispute #{vote.disputable.challengedisputeId}
+              Dispute #{vote.disputable.action.currentChallengeId}
             </div>
           </Item>
         )}
@@ -82,7 +82,7 @@ function DisputableActionStatus({}) {
             trail.
           </Info>
         </Item>
-        <Button mode="strong" wide label="Cancel vote" />
+        <Button mode="strong" wide label="Review details" />
       </Box>
     </React.Fragment>
   )

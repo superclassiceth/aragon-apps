@@ -33,7 +33,7 @@ function VoteInfoBoxes({ vote }) {
         margin-top: ${2 * GU}px;
         display: grid;
         grid-template-columns: auto auto auto;
-        grid-template-rows: 197px;
+        grid-template-rows: auto;
         column-gap: ${2 * GU}px;
       `}
     >
