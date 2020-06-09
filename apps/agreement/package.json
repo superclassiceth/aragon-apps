@@ -23,9 +23,7 @@
     "apm:publish:minor": "aragon apm publish minor --files public/ --prepublish-script apm:prepublish",
     "apm:publish:patch": "aragon apm publish patch --files public/ --prepublish-script apm:prepublish"
   },
-  "dependencies": {
-    "@aragon/os": "aragon/aragonOS#add_disputable_base_app"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/cli": "^7.1.3",
