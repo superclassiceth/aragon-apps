@@ -4,7 +4,7 @@ const DisputableWrapper = require('../wrappers/disputable')
 const { NOW, DAY } = require('../lib/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('../lib/numbers')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/events')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -168,10 +168,10 @@ class AgreementDeployer {
     if (!options.collateralToken && !this.collateralToken) await this.deployCollateralToken(options)
     await disputable.initialize()
 
-    if (options.register || options.register === undefined) {
+    if (options.activate || options.activate === undefined) {
       const collateralToken = options.collateralToken || this.collateralToken
       const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
-      await this.agreement.register(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from: owner })
+      await this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from: owner })
     }
 
     if (currentTimestamp) await this.mockTime(disputable, currentTimestamp)

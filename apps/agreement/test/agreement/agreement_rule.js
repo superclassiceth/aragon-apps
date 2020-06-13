@@ -150,9 +150,10 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                           assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                           assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
-                          assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
+                          assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
                           assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
                           assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
+                          assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
                         })
 
                         it('slashes the submitter locked balance', async () => {
@@ -189,9 +190,10 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                           assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                           assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
-                          assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
+                          assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
                           assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
                           assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
+                          assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
                         })
 
                         it('does not unlock the submitter locked balance', async () => {
@@ -274,6 +276,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                       const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
                       const previousChallengerBalance = await collateralToken.balanceOf(challenger)
+                      const previousChallengerTotalBalance = await disputable.getTotalAvailableBalance(challenger)
                       const previousAgreementBalance = await collateralToken.balanceOf(disputable.address)
                       const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
@@ -283,7 +286,9 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
                       const currentChallengerBalance = await collateralToken.balanceOf(challenger)
+                      const currentChallengerTotalBalance = await disputable.getTotalAvailableBalance(challenger)
                       assertBn(currentChallengerBalance, previousChallengerBalance.add(actionCollateral).add(challengeCollateral), 'challenger balance does not match')
+                      assertBn(currentChallengerTotalBalance, previousChallengerTotalBalance.add(actionCollateral).add(challengeCollateral), 'challenger total balance does not match')
 
                       const currentAgreementBalance = await collateralToken.balanceOf(disputable.address)
                       assertBn(currentAgreementBalance, previousAgreementBalance.sub(challengeCollateral), 'agreement balance does not match')
@@ -350,13 +355,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
         })
       }
 
-      context('when the app was registered', () => {
+      context('when the app was activated', () => {
         itCanRuleActions()
       })
 
       context('when the app was unregistered', () => {
         beforeEach('mark app as unregistered', async () => {
-          await disputable.unregister()
+          await disputable.deactivate()
         })
 
         itCanRuleActions()

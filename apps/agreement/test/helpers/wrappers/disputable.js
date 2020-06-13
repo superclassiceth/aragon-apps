@@ -2,8 +2,10 @@ const AgreementWrapper = require('./agreement')
 
 const { bn } = require('../lib/numbers')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
+
+const EMPTY_DATA = '0x'
 
 class DisputableWrapper extends AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, stakingFactory, disputable, collateralRequirement = {}) {
@@ -36,6 +38,10 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getBalance(this.collateralToken, user)
   }
 
+  async getTotalAvailableBalance(user) {
+    return super.getTotalAvailableBalance(this.collateralToken, user)
+  }
+
   async getDisputableInfo() {
     return super.getDisputableInfo(this.disputable)
   }
@@ -64,17 +70,30 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getStaking(this.collateralToken)
   }
 
-  async register(options = {}) {
+  async activate(options = {}) {
     const { disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration } = this
-    return super.register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, ...options })
+    return super.activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, ...options })
   }
 
-  async unregister(options = {}) {
-    return super.unregister({ disputable: this.disputable, ...options })
+  async deactivate(options = {}) {
+    return super.deactivate({ disputable: this.disputable, ...options })
+  }
+
+  async allowManager({ owner, amount}) {
+    // allow lock manager if needed
+    const staking = await this.getStaking()
+    const lock = await staking.getLock(owner, this.agreement.address)
+    if (lock._allowance.eq(bn(0))) {
+      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
+    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
+      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
+    }
   }
 
   async forward({ script = '0x', from = undefined }) {
     if (!from) from = await this._getSender()
+
+    await this.allowManager({ owner: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
@@ -95,7 +114,6 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async challenge(options = {}) {
-    // TODO: if (options.challengeDuration === undefined) options.challengeDuration = this.challengeDuration.div(bn(2))
     if (options.stake === undefined) options.stake = this.challengeCollateral
     if (options.stake) await this.approve({ amount: options.stake, from: options.challenger })
     return super.challenge(options)

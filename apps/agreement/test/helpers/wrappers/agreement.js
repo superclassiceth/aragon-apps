@@ -2,9 +2,10 @@ const { bn } = require('../lib/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const EMPTY_DATA = '0x'
 
 class AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, stakingFactory) {
@@ -31,13 +32,9 @@ class AgreementWrapper {
     return this.agreement.getCurrentSettingId()
   }
 
-  async getCurrentSetting() {
-    return this.agreement.getSetting(await this.getCurrentSettingId())
-  }
-
   async getAction(actionId) {
-    const { disputable, disputableActionId, context, closed, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableActionId, context, closed, submitter, collateralId, currentChallengeId }
+    const { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId }
   }
 
   async getChallenge(challengeId) {
@@ -52,8 +49,17 @@ class AgreementWrapper {
 
   async getBalance(token, user) {
     const staking = await this.getStaking(token)
-    const { available, locked } = await staking.getBalance(user)
+    const { locked } = await staking.getBalancesOf(user)
+    const available = await staking.unlockedBalanceOf(user)
     return { available, locked }
+  }
+
+  async getTotalAvailableBalance(token, user) {
+    const staking = await this.getStaking(token.address)
+    const unlocked = await staking.unlockedBalanceOf(user)
+    const tokenBalance = await token.balanceOf(user)
+
+    return unlocked.add(tokenBalance)
   }
 
   async getStakingAddress(token) {
@@ -70,13 +76,13 @@ class AgreementWrapper {
   }
 
   async getDisputableInfo(disputable) {
-    const { registered, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
-    return { registered, currentCollateralRequirementId }
+    const { activated, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
+    return { activated, currentCollateralRequirementId }
   }
 
-  async getCollateralRequirement(disputable, collateralId) {
+  async getCollateralRequirement(disputable, collateralRequirementId) {
     const MiniMeToken = this._getContract('MiniMeToken')
-    const { collateralToken, actionAmount, challengeAmount, challengeDuration } = await this.agreement.getCollateralRequirement(disputable.address, collateralId)
+    const { collateralToken, actionAmount, challengeAmount, challengeDuration } = await this.agreement.getCollateralRequirement(disputable.address, collateralRequirementId)
     return { collateralToken: await MiniMeToken.at(collateralToken), actionCollateral: actionAmount, challengeCollateral: challengeAmount, challengeDuration }
   }
 
@@ -161,14 +167,14 @@ class AgreementWrapper {
       : this.agreement.rule(disputeId, ruling)
   }
 
-  async register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
+  async activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.register(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
-  async unregister({ disputable, from = undefined }) {
+  async deactivate({ disputable, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.unregister(disputable.address, { from })
+    return this.agreement.deactivate(disputable.address, { from })
   }
 
   async changeCollateralRequirement(options = {}) {
@@ -180,13 +186,13 @@ class AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    return this.agreement.changeSetting(title, content, arbitrator.address, { from })
+    return this.agreement.changeSetting(arbitrator.address, title, content, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
@@ -267,7 +273,7 @@ class AgreementWrapper {
     if (!from) from = await this._getSender()
 
     if (mint) await token.generateTokens(from, amount)
-    return token.approveAndCall(to, amount, '0x', { from })
+    return token.approveAndCall(to, amount, EMPTY_DATA, { from })
   }
 
   async stake({ token, amount, user = undefined, from = undefined, approve = undefined }) {
@@ -279,14 +285,14 @@ class AgreementWrapper {
     if (approve) await this.approve({ token, amount: approve, to: staking.address, from })
 
     return (user === from)
-      ? staking.stake(amount, { from: user })
-      : staking.stakeFor(user, amount, { from })
+      ? staking.stake(amount, EMPTY_DATA, { from: user })
+      : staking.stakeFor(user, amount, EMPTY_DATA, { from })
   }
 
   async unstake({ token, user, amount = undefined }) {
-    if (amount === undefined) amount = (await this.getBalance(user)).available
     const staking = await this.getStaking(token)
-    return staking.unstake(amount, { from: user })
+    if (amount === undefined) amount = await staking.unlockedBalanceOf(user)
+    return staking.unstake(amount, EMPTY_DATA, { from: user })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {
